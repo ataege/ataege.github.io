@@ -66,6 +66,17 @@
             overflow-x: auto;
             overflow-y: hidden;
         }
+
+        /* Solution Toggle Animation */
+        .solution-content {
+            transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+        .solution-content.open {
+            opacity: 1;
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans h-screen flex overflow-hidden">
@@ -76,6 +87,8 @@
          Updates: 
          1. Added detailed explanations under formulas using LaTeX.
          2. Fixed 3D Surface rendering spikes by switching to structured 2D arrays and 'surface' trace type.
+         3. Added Example Questions & Solutions sections with toggle functionality.
+         4. Fixed DOM null reference errors with safety checks in JS.
     -->
 
     <!-- Mobile Header -->
@@ -153,7 +166,7 @@
                 Explore the methods for solving differential equations using infinite series, particularly for equations with variable coefficients.
             </p>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
                 <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                     <div class="bg-slate-100 px-6 py-4 border-b border-slate-200 font-semibold text-slate-700">Famous Equations</div>
                     <div class="p-6 space-y-6">
@@ -175,15 +188,6 @@
                                 <strong>Explanation:</strong> Bessel's equation appears when solving the Laplace or Helmholtz equations in cylindrical coordinates. Its solutions, $J_k(x)$, behave somewhat like decaying sine and cosine functions. They are essential for modeling wave propagation in circular membranes (like drums), heat flow in cylinders, and electromagnetic waves in wires.
                             </p>
                         </div>
-                        <div>
-                            <h4 class="font-bold text-indigo-600 mb-1">Hermite's Equation</h4>
-                            <div class="bg-slate-50 p-3 rounded text-slate-700 border border-slate-200 overflow-x-auto">
-                                $$ y'' - 2xy' + \lambda y = 0 $$
-                            </div>
-                            <p class="text-sm text-slate-600 mt-2">
-                                <strong>Explanation:</strong> This equation is fundamental in quantum mechanics, specifically for the quantum harmonic oscillator. Its solutions involve Hermite polynomials. The parameter $\lambda$ is related to energy levels in quantum systems. The presence of the $-2x$ term indicates a damping-like effect dependent on position.
-                            </p>
-                        </div>
                     </div>
                 </div>
 
@@ -201,17 +205,37 @@
                         </p>
                     </div>
 
-                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                        <h3 class="text-lg font-bold text-slate-800 mb-3">The Frobenius Method</h3>
-                        <p class="text-sm text-slate-600 mb-4">
-                            When attempting to solve a differential equation near a "regular singular point" (like $x=0$ in Bessel's equation), simple power series often fail. Frobenius proposed a modified form:
-                        </p>
-                        <div class="text-center text-slate-800 mb-4 text-lg">
-                            $$ y = x^{r} \sum_{i=0}^{\infty} a_{i} x^{i} $$
+                    <!-- Example Problem Block -->
+                    <div class="bg-indigo-50 border border-indigo-100 rounded-xl overflow-hidden">
+                        <div class="p-6">
+                            <span class="inline-block px-2 py-1 mb-2 text-xs font-semibold tracking-wide text-indigo-800 uppercase bg-indigo-200 rounded">Example 1 (Chapter 12.8)</span>
+                            <h3 class="text-lg font-bold text-slate-800">Find a power series solution for $y'' + xy' + y = 0$</h3>
+                            <button onclick="toggleSolution('sol-diff-eq')" class="mt-4 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded hover:bg-indigo-700 transition-colors focus:outline-none">
+                                Show Solution Steps
+                            </button>
                         </div>
-                        <p class="text-sm text-slate-600">
-                            <strong>Explanation:</strong> The factor $x^r$ (where $r$ need not be an integer) allows the solution to handle singularities where the function might grow infinite or have a branch point. The value of $r$ is found by solving the <strong>indicial equation</strong>, which is derived by looking at the lowest power of $x$ after substitution.
-                        </p>
+                        <div id="sol-diff-eq" class="solution-content bg-white border-t border-indigo-100">
+                            <div class="p-6 text-sm text-slate-700 space-y-4">
+                                <p><strong>1. Assume a Power Series:</strong> Let $y = \sum_{i=0}^{\infty} a_i x^i$. Then:</p>
+                                <p class="pl-4 border-l-2 border-slate-200">
+                                    $y' = \sum_{i=1}^{\infty} i a_i x^{i-1}$ <br>
+                                    $y'' = \sum_{i=2}^{\infty} i(i-1) a_i x^{i-2}$
+                                </p>
+                                <p><strong>2. Substitute into Equation:</strong></p>
+                                <p class="overflow-x-auto">
+                                    $$ \sum_{i=2}^{\infty} i(i-1) a_i x^{i-2} + x \sum_{i=1}^{\infty} i a_i x^{i-1} + \sum_{i=0}^{\infty} a_i x^i = 0 $$
+                                </p>
+                                <p><strong>3. Shift Indices:</strong> Adjust the first sum so all have $x^i$. Let $k=i-2$ for the first sum.</p>
+                                <p>
+                                    $$ \sum_{i=0}^{\infty} (i+2)(i+1) a_{i+2} x^i + \sum_{i=1}^{\infty} i a_i x^i + \sum_{i=0}^{\infty} a_i x^i = 0 $$
+                                </p>
+                                <p><strong>4. Find Recurrence Relation:</strong> Combine coefficients of $x^i$. For $i \ge 1$:</p>
+                                <p>
+                                    $$ (i+2)(i+1)a_{i+2} + (i+1)a_i = 0 \implies a_{i+2} = -\frac{1}{i+2} a_i $$
+                                </p>
+                                <p><strong>Conclusion:</strong> The coefficients determine the series. $a_0$ and $a_1$ are arbitrary constants (initial conditions).</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -268,6 +292,20 @@
                             <br><br>
                             For a <strong>Hyperbola</strong>, $a$ defines the distance from the center to the vertex, while $b/a$ determines the slope of the asymptotic lines that the curve approaches.
                         </p>
+                    </div>
+                    
+                    <!-- Example/Proof Block -->
+                    <div class="mt-6 border-t pt-4">
+                        <button onclick="toggleSolution('sol-conic-proof')" class="w-full text-left text-sm font-bold text-indigo-600 hover:text-indigo-800 flex justify-between items-center group">
+                            <span>Proof: Ellipse Equation</span>
+                            <span class="text-xs group-hover:translate-x-1 transition-transform">&rarr;</span>
+                        </button>
+                        <div id="sol-conic-proof" class="solution-content mt-2 bg-slate-50 p-3 rounded text-xs text-slate-600 border border-slate-200">
+                            <p class="mb-2"><strong>Definition:</strong> An ellipse is the set of points $P(x,y)$ where the sum of distances to two foci $F(c,0)$ and $F'(-c,0)$ is constant $2a$.</p>
+                            <p class="mb-2">$$ \sqrt{(x-c)^2+y^2} + \sqrt{(x+c)^2+y^2} = 2a $$</p>
+                            <p class="mb-2"><strong>Derivation:</strong> Move one radical to the right, square both sides, simplify, and square again. Using $b^2 = a^2 - c^2$, this reduces to the standard form:</p>
+                            <p>$$ \frac{x^2}{a^2} + \frac{y^2}{b^2} = 1 $$</p>
+                        </div>
                     </div>
                 </div>
 
@@ -455,6 +493,22 @@
                         <p class="text-xs text-slate-500 mt-3">
                             Curvature quantifies deviation from a straight line. A line has $k=0$. A circle of radius $R$ has constant curvature $k=1/R$ (smaller circles curve "sharper"). It depends on both velocity and acceleration vectors.
                         </p>
+                        
+                        <!-- Curvature Proof Block -->
+                        <div class="mt-4 pt-4 border-t border-slate-100">
+                            <button onclick="toggleSolution('sol-curvature-proof')" class="w-full text-left text-sm font-bold text-indigo-600 hover:text-indigo-800 flex justify-between items-center group">
+                                <span>Derivation: Curvature Formula</span>
+                                <span class="text-xs group-hover:translate-x-1 transition-transform">&rarr;</span>
+                            </button>
+                            <div id="sol-curvature-proof" class="solution-content mt-2 bg-slate-50 p-3 rounded text-xs text-slate-600 border border-slate-200">
+                                <p class="mb-2"><strong>Goal:</strong> Derive $k = \frac{||v \times a||}{||v||^3}$.</p>
+                                <p class="mb-2">1. By definition, $k = ||\frac{dT}{ds}||$. Using Chain Rule: $\frac{dT}{dt} = \frac{dT}{ds}\frac{ds}{dt} = k \cdot v \cdot N$ (since $\frac{dT}{ds} = kN$).</p>
+                                <p class="mb-2">2. Velocity $v = ||v||T$. Acceleration $a = \frac{dv}{dt} = \frac{d||v||}{dt}T + ||v||\frac{dT}{dt}$.</p>
+                                <p class="mb-2">3. Substitute $\frac{dT}{dt} = k||v||N$:<br> $$a = \frac{d||v||}{dt}T + k||v||^2 N$$</p>
+                                <p class="mb-2">4. Compute $v \times a$: The term with $T \times T$ vanishes. <br> $$v \times a = (||v||T) \times (k||v||^2 N) = k||v||^3 (T \times N) = k||v||^3 B$$</p>
+                                <p>5. Since $B$ is a unit vector, $||v \times a|| = k||v||^3$. Solve for $k$.</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -498,9 +552,25 @@
                         If second partials are continuous:<br>
                         $$ f_{xy} = f_{yx} $$
                     </div>
-                    <p class="text-xs text-slate-500 mt-3">
-                        This theorem assures us that for most "nice" functions used in physics and engineering, the order of differentiation does not matter. Differentiating by $x$ then $y$ yields the same result as $y$ then $x$. It implies the geometric "twist" of the surface is consistent.
+                    <p class="text-xs text-slate-500 mt-3 mb-4">
+                        This theorem assures us that for most "nice" functions used in physics and engineering, the order of differentiation does not matter. Differentiating by $x$ then $y$ yields the same result as $y$ then $x$.
                     </p>
+                    
+                    <!-- Clairaut Proof Block -->
+                    <div class="border-t pt-4">
+                        <button onclick="toggleSolution('sol-clairaut-proof')" class="w-full text-left text-sm font-bold text-emerald-600 hover:text-emerald-800 flex justify-between items-center group">
+                            <span>Proof: Using Mean Value Theorem</span>
+                            <span class="text-xs group-hover:translate-x-1 transition-transform">&rarr;</span>
+                        </button>
+                        <div id="sol-clairaut-proof" class="solution-content mt-2 bg-slate-50 p-3 rounded text-xs text-slate-600 border border-slate-200">
+                            <p class="mb-2">Consider the quantity: $Q = f(x+\Delta x, y+\Delta y) - f(x+\Delta x, y) - f(x, y+\Delta y) + f(x,y)$.</p>
+                            <p class="mb-2">1. Define $g(x) = f(x, y+\Delta y) - f(x,y)$. Then $Q = g(x+\Delta x) - g(x)$.</p>
+                            <p class="mb-2">2. Apply Mean Value Theorem (MVT) to $g$: $Q = g'(\bar{x})\Delta x = [f_x(\bar{x}, y+\Delta y) - f_x(\bar{x}, y)]\Delta x$.</p>
+                            <p class="mb-2">3. Apply MVT again to the function $h(y) = f_x(\bar{x}, y)$: $Q = (f_{xy}(\bar{x}, \bar{y})\Delta y)\Delta x$.</p>
+                            <p class="mb-2">4. As $\Delta x, \Delta y \to 0$, $Q/(\Delta x \Delta y) \to f_{xy}(x,y)$.</p>
+                            <p>5. Symmetrically, define $k(y) = f(x+\Delta x, y) - f(x,y)$ to show $Q/(\Delta x \Delta y) \to f_{yx}(x,y)$. Thus they are equal.</p>
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
@@ -568,17 +638,37 @@
             closeMobileMenu();
         }
 
+        // --- TOGGLE SOLUTIONS LOGIC ---
+        function toggleSolution(id) {
+            const el = document.getElementById(id);
+            if(el.style.maxHeight) {
+                el.style.maxHeight = null;
+                el.classList.remove('open');
+            } else {
+                el.style.maxHeight = el.scrollHeight + "px";
+                el.classList.add('open');
+            }
+        }
+
         // --- CONIC SECTIONS LOGIC (Chart.js) ---
         let conicChartInstance = null;
 
         function updateConic() {
-            const type = document.getElementById('conicType').value;
-            const a = parseFloat(document.getElementById('input-a').value);
-            const b = parseFloat(document.getElementById('input-b').value);
+            const conicTypeEl = document.getElementById('conicType');
+            const inputAEl = document.getElementById('input-a');
+            const inputBEl = document.getElementById('input-b');
             
-            // Update Text
-            document.getElementById('val-a').innerText = a;
-            document.getElementById('val-b').innerText = b;
+            if(!conicTypeEl || !inputAEl || !inputBEl) return;
+
+            const type = conicTypeEl.value;
+            const a = parseFloat(inputAEl.value);
+            const b = parseFloat(inputBEl.value);
+            
+            // Update Text with checks
+            const valAEl = document.getElementById('val-a');
+            const valBEl = document.getElementById('val-b');
+            if(valAEl) valAEl.innerText = a;
+            if(valBEl) valBEl.innerText = b;
             
             let equationHTML = "";
             let eccentricity = 0;
@@ -626,16 +716,20 @@
             }
 
             const eqElement = document.getElementById('conic-equation');
-            eqElement.innerHTML = equationHTML;
-            document.getElementById('calc-eccentricity').innerText = eccentricity.toFixed(3);
+            if(eqElement) eqElement.innerHTML = equationHTML;
+            
+            const eccEl = document.getElementById('calc-eccentricity');
+            if(eccEl) eccEl.innerText = eccentricity.toFixed(3);
             
             // Ask MathJax to typeset the new equation
-            if(window.MathJax) {
+            if(window.MathJax && eqElement) {
                 MathJax.typesetPromise([eqElement]);
             }
 
             // Render Chart
-            const ctx = document.getElementById('conicChart').getContext('2d');
+            const canvas = document.getElementById('conicChart');
+            if(!canvas) return;
+            const ctx = canvas.getContext('2d');
             
             if(conicChartInstance) {
                 conicChartInstance.destroy();
@@ -688,8 +782,11 @@
 
         // --- QUADRIC SURFACES LOGIC (Plotly.js) ---
         function updateSurface() {
-            const type = document.getElementById('surfaceType').value;
+            const surfaceTypeEl = document.getElementById('surfaceType');
             const container = document.getElementById('surfacePlot');
+            if(!surfaceTypeEl || !container) return;
+
+            const type = surfaceTypeEl.value;
             // CHANGE: 2D arrays for surface plot
             let z_data = [], x_data = [], y_data = [];
             let equation = "";
@@ -767,8 +864,8 @@
             }
 
             const eqElement = document.getElementById('surface-eq');
-            eqElement.innerHTML = equation;
-            if(window.MathJax) {
+            if(eqElement) eqElement.innerHTML = equation;
+            if(window.MathJax && eqElement) {
                 MathJax.typesetPromise([eqElement]);
             }
 
@@ -806,9 +903,14 @@
 
         // --- COORDINATE CONVERTER LOGIC ---
         function convertCoords() {
-            const x = parseFloat(document.getElementById('inp-x').value) || 0;
-            const y = parseFloat(document.getElementById('inp-y').value) || 0;
-            const z = parseFloat(document.getElementById('inp-z').value) || 0;
+            const inpX = document.getElementById('inp-x');
+            const inpY = document.getElementById('inp-y');
+            const inpZ = document.getElementById('inp-z');
+            if(!inpX || !inpY || !inpZ) return;
+
+            const x = parseFloat(inpX.value) || 0;
+            const y = parseFloat(inpY.value) || 0;
+            const z = parseFloat(inpZ.value) || 0;
 
             // Cylindrical
             const r = Math.sqrt(x*x + y*y);
@@ -822,13 +924,23 @@
             const phi_deg = (phi_rad * 180 / Math.PI).toFixed(2);
 
             // Update DOM
-            document.getElementById('out-r').innerText = r.toFixed(2);
-            document.getElementById('out-theta-c').innerText = theta_deg + '°';
-            document.getElementById('out-z').innerText = z.toFixed(2);
+            const outR = document.getElementById('out-r');
+            if(outR) outR.innerText = r.toFixed(2);
+            
+            const outThetaC = document.getElementById('out-theta-c');
+            if(outThetaC) outThetaC.innerText = theta_deg + '°';
+            
+            const outZ = document.getElementById('out-z');
+            if(outZ) outZ.innerText = z.toFixed(2);
 
-            document.getElementById('out-rho').innerText = rho.toFixed(2);
-            document.getElementById('out-theta-s').innerText = theta_deg + '°';
-            document.getElementById('out-phi').innerText = phi_deg + '°';
+            const outRho = document.getElementById('out-rho');
+            if(outRho) outRho.innerText = rho.toFixed(2);
+            
+            const outThetaS = document.getElementById('out-theta-s');
+            if(outThetaS) outThetaS.innerText = theta_deg + '°';
+            
+            const outPhi = document.getElementById('out-phi');
+            if(outPhi) outPhi.innerText = phi_deg + '°';
         }
 
         // Draw simple static diagrams for coords on canvas
