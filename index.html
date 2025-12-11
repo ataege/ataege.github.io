@@ -73,7 +73,9 @@
     <!-- Application Structure Plan: 
          Layout: Sidebar navigation (collapsible on mobile) + Main Content Area.
          Rationale: The report is divided into distinct mathematical chapters. A sidebar provides quick access to these distinct topics.
-         Updates: Added detailed explanations under formulas using LaTeX.
+         Updates: 
+         1. Added detailed explanations under formulas using LaTeX.
+         2. Fixed 3D Surface rendering spikes by switching to structured 2D arrays and 'surface' trace type.
     -->
 
     <!-- Mobile Header -->
@@ -688,59 +690,27 @@
         function updateSurface() {
             const type = document.getElementById('surfaceType').value;
             const container = document.getElementById('surfacePlot');
-            let z = [], x = [], y = [];
+            // CHANGE: 2D arrays for surface plot
+            let z_data = [], x_data = [], y_data = [];
             let equation = "";
-            let color = 'viridis';
-
+            
             // Constants
             const a=1, b=1, c=1; 
-            const n = 30; // Resolution
+            const n = 50; // Increased resolution
 
-            // Generate parametric data for mesh3d or surface
+            // Generate parametric data for surface (grid)
             
-            let u = [], v = [];
             for(let i=0; i<=n; i++) {
                 let u_val = (i/n) * 2 * Math.PI; // 0 to 2pi
+                let x_row = [], y_row = [], z_row = [];
+
                 for(let j=0; j<=n; j++) {
-                    let v_val = (j/n) * Math.PI; // 0 to pi (for sphere) or other ranges
+                    let v_val = (j/n) * Math.PI; // 0 to pi (for sphere)
                     
                     let px=0, py=0, pz=0;
 
-                    if(type === 'ellipsoid') {
-                        equation = "$$ \\frac{x^2}{a^2} + \\frac{y^2}{b^2} + \\frac{z^2}{c^2} = 1 $$";
-                        px = a * Math.sin(v_val) * Math.cos(u_val);
-                        py = b * Math.sin(v_val) * Math.sin(u_val);
-                        pz = c * Math.cos(v_val);
-                    }
-                    else if(type === 'hyperboloid1') {
-                        equation = "$$ \\frac{x^2}{a^2} + \\frac{y^2}{b^2} - \\frac{z^2}{c^2} = 1 $$";
-                        let v_mod = (j/n) * 4 - 2; 
-                        px = a * Math.cosh(v_mod) * Math.cos(u_val);
-                        py = b * Math.cosh(v_mod) * Math.sin(u_val);
-                        pz = c * Math.sinh(v_mod);
-                    }
-                    else if(type === 'hyperboloid2') {
-                        equation = "$$ \\frac{x^2}{a^2} + \\frac{y^2}{b^2} - \\frac{z^2}{c^2} = -1 $$";
-                        let v_mod = (j/n) * 2; 
-                        px = a * Math.sinh(v_mod) * Math.cos(u_val);
-                        py = b * Math.sinh(v_mod) * Math.sin(u_val);
-                        pz = c * Math.cosh(v_mod);
-                    }
-                    else if(type === 'cone') {
-                        equation = "$$ \\frac{x^2}{a^2} + \\frac{y^2}{b^2} - \\frac{z^2}{c^2} = 0 $$";
-                        let v_mod = (j/n) * 4 - 2; // Height
-                        px = (a * v_mod/2) * Math.cos(u_val);
-                        py = (b * v_mod/2) * Math.sin(u_val);
-                        pz = (c * v_mod/2);
-                    }
-                    else if(type === 'paraboloid') {
-                        equation = "$$ z = \\frac{x^2}{a^2} + \\frac{y^2}{b^2} $$";
-                        let v_mod = (j/n) * 2; // Radius
-                        px = a * v_mod * Math.cos(u_val);
-                        py = b * v_mod * Math.sin(u_val);
-                        pz = Math.pow(v_mod, 2);
-                    }
-                    else if(type === 'saddle') {
+                    // Specific logic for Saddle to ensure grid is Cartesian
+                    if(type === 'saddle') {
                         equation = "$$ z = \\frac{x^2}{a^2} - \\frac{y^2}{b^2} $$";
                         let x_val = (i/n)*4 - 2;
                         let y_val = (j/n)*4 - 2;
@@ -748,11 +718,52 @@
                         py = y_val;
                         pz = (x_val*x_val)/(a*a) - (y_val*y_val)/(b*b);
                     }
+                    else {
+                        // Parametric shapes
+                        if(type === 'ellipsoid') {
+                            equation = "$$ \\frac{x^2}{a^2} + \\frac{y^2}{b^2} + \\frac{z^2}{c^2} = 1 $$";
+                            px = a * Math.sin(v_val) * Math.cos(u_val);
+                            py = b * Math.sin(v_val) * Math.sin(u_val);
+                            pz = c * Math.cos(v_val);
+                        }
+                        else if(type === 'hyperboloid1') {
+                            equation = "$$ \\frac{x^2}{a^2} + \\frac{y^2}{b^2} - \\frac{z^2}{c^2} = 1 $$";
+                            let v_mod = (j/n) * 4 - 2; 
+                            px = a * Math.cosh(v_mod) * Math.cos(u_val);
+                            py = b * Math.cosh(v_mod) * Math.sin(u_val);
+                            pz = c * Math.sinh(v_mod);
+                        }
+                        else if(type === 'hyperboloid2') {
+                            equation = "$$ \\frac{x^2}{a^2} + \\frac{y^2}{b^2} - \\frac{z^2}{c^2} = -1 $$";
+                            let v_mod = (j/n) * 2; 
+                            // Plot top sheet only
+                            px = a * Math.sinh(v_mod) * Math.cos(u_val);
+                            py = b * Math.sinh(v_mod) * Math.sin(u_val);
+                            pz = c * Math.cosh(v_mod);
+                        }
+                        else if(type === 'cone') {
+                            equation = "$$ \\frac{x^2}{a^2} + \\frac{y^2}{b^2} - \\frac{z^2}{c^2} = 0 $$";
+                            let v_mod = (j/n) * 4 - 2; // Height
+                            px = (a * v_mod/2) * Math.cos(u_val);
+                            py = (b * v_mod/2) * Math.sin(u_val);
+                            pz = (c * v_mod/2);
+                        }
+                        else if(type === 'paraboloid') {
+                            equation = "$$ z = \\frac{x^2}{a^2} + \\frac{y^2}{b^2} $$";
+                            let v_mod = (j/n) * 2; // Radius
+                            px = a * v_mod * Math.cos(u_val);
+                            py = b * v_mod * Math.sin(u_val);
+                            pz = Math.pow(v_mod, 2);
+                        }
+                    }
 
-                    x.push(px);
-                    y.push(py);
-                    z.push(pz);
+                    x_row.push(px);
+                    y_row.push(py);
+                    z_row.push(pz);
                 }
+                x_data.push(x_row);
+                y_data.push(y_row);
+                z_data.push(z_row);
             }
 
             const eqElement = document.getElementById('surface-eq');
@@ -763,18 +774,18 @@
 
             // Plotly Config
             let data = [{
-                type: 'mesh3d',
-                x: x,
-                y: y,
-                z: z,
-                opacity: 0.8,
-                color: 'rgb(79, 70, 229)',
-                colorscale: [
-                    [0, 'rgb(79, 70, 229)'],
-                    [1, 'rgb(167, 139, 250)']
-                ],
-                intensity: z,
-                showscale: false
+                type: 'surface',
+                x: x_data,
+                y: y_data,
+                z: z_data,
+                opacity: 0.9,
+                colorscale: 'Viridis', 
+                showscale: false,
+                contours: {
+                    x: { show: true, color: '#333333', highlight: false, width: 1 },
+                    y: { show: true, color: '#333333', highlight: false, width: 1 },
+                    z: { show: false }
+                }
             }];
 
             // Layout
