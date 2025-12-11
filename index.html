@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculus & Geometry Atlas</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Plotly.js -->
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    
+    <!-- MathJax Configuration -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            svg: {
+                fontCache: 'global'
+            }
+        };
+    </script>
+    <!-- Load MathJax -->
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- Chosen Palette: Slate & Indigo (Academic, Clean, Focus) -->
+    <style>
+        /* Chart Container Requirements */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px; /* Max width for larger screens */
+            margin-left: auto;
+            margin-right: auto;
+            height: 400px;
+            max-height: 500px;
+            overflow: hidden; /* Prevent overflow */
+        }
+        
+        @media (max-width: 640px) {
+            .chart-container {
+                height: 300px;
+            }
+        }
+
+        /* Custom Scrollbar for side nav */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+
+        /* MathJax container tweaks */
+        mjx-container {
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans h-screen flex overflow-hidden">
+
+    <!-- Application Structure Plan: 
+         Layout: Sidebar navigation (collapsible on mobile) + Main Content Area.
+         Rationale: The report is divided into distinct mathematical chapters. A sidebar provides quick access to these distinct topics.
+         Updates: Added detailed explanations under formulas using LaTeX.
+    -->
+
+    <!-- Mobile Header -->
+    <div class="fixed top-0 left-0 w-full h-14 bg-white border-b border-slate-200 flex items-center justify-between px-4 z-50 md:hidden">
+        <span class="font-bold text-lg text-indigo-700">Math Atlas</span>
+        <button id="menu-btn" class="text-slate-600 hover:text-indigo-600 focus:outline-none">
+            <span class="text-2xl">&#9776;</span>
+        </button>
+    </div>
+
+    <!-- Sidebar Navigation -->
+    <nav id="sidebar" class="bg-white border-r border-slate-200 w-64 h-full fixed md:static top-0 left-0 transform -translate-x-full md:translate-x-0 transition-transform duration-300 z-40 pt-16 md:pt-0 flex flex-col">
+        <div class="p-6 border-b border-slate-100 hidden md:block">
+            <h1 class="text-2xl font-bold text-indigo-700 tracking-tight">Math Atlas</h1>
+            <p class="text-xs text-slate-500 mt-1">Interactive Source Report</p>
+        </div>
+        <div class="flex-1 overflow-y-auto py-4">
+            <ul class="space-y-1 px-3">
+                <li><button onclick="showSection('home')" class="nav-item w-full text-left px-4 py-3 rounded-lg text-sm font-medium text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 transition-colors bg-indigo-50 text-indigo-700" data-target="home">Dashboard Overview</button></li>
+                
+                <li class="pt-4 pb-1 px-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Chapter 12: Series</li>
+                <li><button onclick="showSection('diff-eq')" class="nav-item w-full text-left px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 transition-colors" data-target="diff-eq">Differential Equations</button></li>
+                
+                <li class="pt-4 pb-1 px-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Chapter 14: Curves & Surfaces</li>
+                <li><button onclick="showSection('conics')" class="nav-item w-full text-left px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 transition-colors" data-target="conics">Conic Sections (2D)</button></li>
+                <li><button onclick="showSection('surfaces')" class="nav-item w-full text-left px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 transition-colors" data-target="surfaces">Quadric Surfaces (3D)</button></li>
+                <li><button onclick="showSection('coords')" class="nav-item w-full text-left px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 transition-colors" data-target="coords">Coordinate Systems</button></li>
+                <li><button onclick="showSection('space-curves')" class="nav-item w-full text-left px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 transition-colors" data-target="space-curves">Physics of Curves</button></li>
+
+                <li class="pt-4 pb-1 px-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Chapter 15: Partial Diff</li>
+                <li><button onclick="showSection('partials')" class="nav-item w-full text-left px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 transition-colors" data-target="partials">Definitions & Theorems</button></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-1 h-full overflow-y-auto pt-14 md:pt-0 bg-slate-50 relative" onclick="closeMobileMenu()">
+        
+        <!-- SECTION: HOME -->
+        <section id="home" class="content-section p-6 md:p-10 max-w-5xl mx-auto animate-fade-in block">
+            <header class="mb-10 text-center">
+                <h2 class="text-3xl md:text-4xl font-bold text-slate-800 mb-4">Mathematics Source Report</h2>
+                <p class="text-slate-600 max-w-2xl mx-auto">
+                    Welcome to the interactive edition of your Calculus and Geometry report. 
+                    Explore differential equations, manipulate 3D surfaces, and convert coordinate systems dynamically.
+                </p>
+            </header>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Card 1 -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow cursor-pointer" onclick="showSection('conics')">
+                    <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-xl mb-4 font-bold">$$ \bigcirc $$</div>
+                    <h3 class="text-lg font-bold text-slate-800 mb-2">Conic Sections</h3>
+                    <p class="text-slate-500 text-sm">Interactive 2D visualizations of Ellipses, Hyperbolas, and Parabolas with adjustable parameters.</p>
+                </div>
+                <!-- Card 2 -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow cursor-pointer" onclick="showSection('surfaces')">
+                    <div class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 text-xl mb-4 font-bold">$$ \oplus $$</div>
+                    <h3 class="text-lg font-bold text-slate-800 mb-2">3D Surfaces</h3>
+                    <p class="text-slate-500 text-sm">Explore Quadric Surfaces like Ellipsoids and Hyperboloids using a WebGL-powered plotter.</p>
+                </div>
+                <!-- Card 3 -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow cursor-pointer" onclick="showSection('diff-eq')">
+                    <div class="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 text-xl mb-4 font-bold">$$ \sum $$</div>
+                    <h3 class="text-lg font-bold text-slate-800 mb-2">Series Solutions</h3>
+                    <p class="text-slate-500 text-sm">Comprehensive reference for Power Series, Frobenius Method, and famous differential equations.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION: DIFFERENTIAL EQUATIONS (Chapter 12) -->
+        <section id="diff-eq" class="content-section p-6 md:p-10 max-w-5xl mx-auto hidden">
+            <h2 class="text-3xl font-bold text-slate-800 mb-6">Series Solutions of Differential Equations</h2>
+            <p class="text-slate-600 mb-8">
+                Explore the methods for solving differential equations using infinite series, particularly for equations with variable coefficients.
+            </p>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="bg-slate-100 px-6 py-4 border-b border-slate-200 font-semibold text-slate-700">Famous Equations</div>
+                    <div class="p-6 space-y-6">
+                        <div>
+                            <h4 class="font-bold text-indigo-600 mb-1">Legendre's Equation</h4>
+                            <div class="bg-slate-50 p-3 rounded text-slate-700 border border-slate-200 overflow-x-auto">
+                                $$ (1-x^2)y'' - 2xy' + \lambda y = 0 $$
+                            </div>
+                            <p class="text-sm text-slate-600 mt-2">
+                                <strong>Explanation:</strong> Legendre's equation arises frequently in physics, particularly when solving problems involving spherical symmetry (like electrostatics or gravitation) using spherical coordinates. The solutions are called <em>Legendre Polynomials</em>, $P_n(x)$, which are orthogonal on the interval $[-1, 1]$. $\lambda$ is usually of the form $n(n+1)$ where $n$ is an integer.
+                            </p>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-indigo-600 mb-1">Bessel's Equation (order $k$)</h4>
+                            <div class="bg-slate-50 p-3 rounded text-slate-700 border border-slate-200 overflow-x-auto">
+                                $$ x^2y'' + xy' + (x^2 - k^2)y = 0 $$
+                            </div>
+                            <p class="text-sm text-slate-600 mt-2">
+                                <strong>Explanation:</strong> Bessel's equation appears when solving the Laplace or Helmholtz equations in cylindrical coordinates. Its solutions, $J_k(x)$, behave somewhat like decaying sine and cosine functions. They are essential for modeling wave propagation in circular membranes (like drums), heat flow in cylinders, and electromagnetic waves in wires.
+                            </p>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-indigo-600 mb-1">Hermite's Equation</h4>
+                            <div class="bg-slate-50 p-3 rounded text-slate-700 border border-slate-200 overflow-x-auto">
+                                $$ y'' - 2xy' + \lambda y = 0 $$
+                            </div>
+                            <p class="text-sm text-slate-600 mt-2">
+                                <strong>Explanation:</strong> This equation is fundamental in quantum mechanics, specifically for the quantum harmonic oscillator. Its solutions involve Hermite polynomials. The parameter $\lambda$ is related to energy levels in quantum systems. The presence of the $-2x$ term indicates a damping-like effect dependent on position.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                        <h3 class="text-lg font-bold text-slate-800 mb-3">Power Series Method</h3>
+                        <p class="text-sm text-slate-600 mb-4">
+                            Many differential equations cannot be solved with elementary functions. The Power Series method assumes the solution can be expanded as an infinite polynomial:
+                        </p>
+                        <div class="text-center text-slate-800 mb-4 text-lg">
+                            $$ y = \sum_{i=0}^{\infty} a_{i} x^{i} $$
+                        </div>
+                        <p class="text-sm text-slate-600">
+                            <strong>How it works:</strong> We differentiate this series term-by-term to get $y'$ and $y''$, substitute them into the differential equation, and group powers of $x$. This leads to a <em>recurrence relation</em> that allows us to determine the coefficients $a_i$ iteratively. This method is valid near "ordinary points" where the equation's coefficients behave well.
+                        </p>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                        <h3 class="text-lg font-bold text-slate-800 mb-3">The Frobenius Method</h3>
+                        <p class="text-sm text-slate-600 mb-4">
+                            When attempting to solve a differential equation near a "regular singular point" (like $x=0$ in Bessel's equation), simple power series often fail. Frobenius proposed a modified form:
+                        </p>
+                        <div class="text-center text-slate-800 mb-4 text-lg">
+                            $$ y = x^{r} \sum_{i=0}^{\infty} a_{i} x^{i} $$
+                        </div>
+                        <p class="text-sm text-slate-600">
+                            <strong>Explanation:</strong> The factor $x^r$ (where $r$ need not be an integer) allows the solution to handle singularities where the function might grow infinite or have a branch point. The value of $r$ is found by solving the <strong>indicial equation</strong>, which is derived by looking at the lowest power of $x$ after substitution.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION: CONIC SECTIONS (Chapter 14.1) -->
+        <section id="conics" class="content-section p-6 md:p-10 max-w-5xl mx-auto hidden">
+            <h2 class="text-3xl font-bold text-slate-800 mb-2">Conic Sections Explorer</h2>
+            <p class="text-slate-600 mb-8">Visualize how parameters $a$ and $b$ affect the shape of Ellipses and Hyperbolas.</p>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Controls -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 lg:col-span-1 h-fit">
+                    <h3 class="font-bold text-slate-700 mb-4 border-b pb-2">Configuration</h3>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-slate-600 mb-2">Shape Type</label>
+                        <select id="conicType" class="w-full p-2 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" onchange="updateConic()">
+                            <option value="ellipse">Ellipse</option>
+                            <option value="hyperbola_x">Hyperbola (X-axis)</option>
+                            <option value="hyperbola_y">Hyperbola (Y-axis)</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-slate-600 mb-1">Parameter $a$: <span id="val-a" class="font-bold text-indigo-600">3</span></label>
+                        <input type="range" id="input-a" min="1" max="10" step="0.5" value="3" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer" oninput="updateConic()">
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-slate-600 mb-1">Parameter $b$: <span id="val-b" class="font-bold text-indigo-600">2</span></label>
+                        <input type="range" id="input-b" min="1" max="10" step="0.5" value="2" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer" oninput="updateConic()">
+                    </div>
+
+                    <div class="bg-slate-50 p-3 rounded border border-slate-200">
+                        <p class="text-xs text-slate-500 uppercase font-bold mb-1">Current Equation</p>
+                        <div id="conic-equation" class="text-sm text-center text-slate-800">
+                            $$ \frac{x^2}{3^2} + \frac{y^2}{2^2} = 1 $$
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 p-3 bg-indigo-50 rounded border border-indigo-100">
+                        <p class="text-xs text-indigo-800">
+                            <strong>Did you know?</strong><br>
+                            Eccentricity $e$ = <span id="calc-eccentricity">0.75</span>
+                        </p>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t border-slate-100">
+                        <p class="text-xs text-slate-500">
+                            <strong>Geometric Meaning:</strong>
+                            <br>
+                            $a$ and $b$ act as scaling factors. For an <strong>Ellipse</strong>, they represent the semi-major and semi-minor axes (radii). If $a=b$, it becomes a circle. 
+                            <br><br>
+                            For a <strong>Hyperbola</strong>, $a$ defines the distance from the center to the vertex, while $b/a$ determines the slope of the asymptotic lines that the curve approaches.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Chart -->
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 lg:col-span-2 flex flex-col justify-center">
+                    <div class="chart-container">
+                        <canvas id="conicChart"></canvas>
+                    </div>
+                    <div class="text-center mt-2 text-xs text-slate-400">
+                        Interactive Canvas rendering via Chart.js
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION: QUADRIC SURFACES (Chapter 14.4) -->
+        <section id="surfaces" class="content-section p-6 md:p-10 max-w-5xl mx-auto hidden">
+            <h2 class="text-3xl font-bold text-slate-800 mb-2">3D Quadric Surfaces</h2>
+            <p class="text-slate-600 mb-8">
+                Rotate and zoom into 3D representations of quadric surfaces. These are defined by quadratic equations in three variables ($x, y, z$).
+            </p>
+
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="border-b border-slate-200 bg-slate-50 p-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <div class="flex items-center gap-2">
+                        <label class="text-sm font-bold text-slate-700">Surface:</label>
+                        <select id="surfaceType" class="p-2 border border-slate-300 rounded text-sm" onchange="updateSurface()">
+                            <option value="ellipsoid">Ellipsoid</option>
+                            <option value="hyperboloid1">Hyperboloid (1 Sheet)</option>
+                            <option value="hyperboloid2">Hyperboloid (2 Sheets)</option>
+                            <option value="cone">Elliptic Cone</option>
+                            <option value="paraboloid">Elliptic Paraboloid</option>
+                            <option value="saddle">Hyperbolic Paraboloid (Saddle)</option>
+                        </select>
+                    </div>
+                    <div class="text-sm text-indigo-700 bg-white px-3 py-1 rounded border border-indigo-200" id="surface-eq">
+                        $$ \frac{x^2}{a^2} + \frac{y^2}{b^2} + \frac{z^2}{c^2} = 1 $$
+                    </div>
+                </div>
+                
+                <div class="p-1 bg-white">
+                    <div class="chart-container" style="height: 500px; max-height: 600px;">
+                        <div id="surfacePlot" class="w-full h-full"></div>
+                    </div>
+                </div>
+                <div class="p-4 bg-slate-50 border-t border-slate-200">
+                    <p class="text-sm text-slate-600">
+                        <strong>Explanation:</strong> Quadric surfaces are the 3D analogs of conic sections. They are the locus of points satisfying a second-degree polynomial in $x, y, z$. 
+                        The <strong>Ellipsoid</strong> is like a stretched sphere. The <strong>Hyperboloids</strong> are open surfaces, either connected (1 sheet) or separated (2 sheets). 
+                        The <strong>Paraboloids</strong> (like the satellite dish shape or the saddle) are unique because they have no center of symmetry and extend infinitely in one direction.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION: COORDINATE SYSTEMS (Chapter 14.5) -->
+        <section id="coords" class="content-section p-6 md:p-10 max-w-5xl mx-auto hidden">
+            <h2 class="text-3xl font-bold text-slate-800 mb-6">Coordinate Systems</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+                <!-- Cylindrical -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <h3 class="text-xl font-bold text-indigo-700 mb-3">Cylindrical $(r, \theta, z)$</h3>
+                    <div class="space-y-2 text-sm text-slate-600 mb-4 pl-4 border-l-2 border-indigo-100">
+                        <p>$ x = r \cos \theta $</p>
+                        <p>$ y = r \sin \theta $</p>
+                        <p>$ z = z $</p>
+                    </div>
+                    <div class="h-32 bg-slate-50 rounded border border-slate-100 flex items-center justify-center text-slate-400 text-xs mb-3">
+                        <!-- Canvas drawing for Diagram -->
+                        <canvas id="cylCanvas" width="200" height="120"></canvas>
+                    </div>
+                    <p class="text-xs text-slate-500">
+                        <strong>Explanation:</strong> This system extends polar coordinates into 3D. $r$ is the radial distance from the $z$-axis (not the origin), $\theta$ is the angle in the $xy$-plane (azimuth), and $z$ remains the vertical height. It is ideal for systems with symmetry around an axis, like pipes, wires, or tanks.
+                    </p>
+                </div>
+
+                <!-- Spherical -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <h3 class="text-xl font-bold text-indigo-700 mb-3">Spherical $(\rho, \theta, \phi)$</h3>
+                    <div class="space-y-2 text-sm text-slate-600 mb-4 pl-4 border-l-2 border-indigo-100">
+                        <p>$ x = \rho \sin \phi \cos \theta $</p>
+                        <p>$ y = \rho \sin \phi \sin \theta $</p>
+                        <p>$ z = \rho \cos \phi $</p>
+                    </div>
+                    <div class="h-32 bg-slate-50 rounded border border-slate-100 flex items-center justify-center text-slate-400 text-xs mb-3">
+                        <!-- Canvas drawing for Diagram -->
+                        <canvas id="sphCanvas" width="200" height="120"></canvas>
+                    </div>
+                    <p class="text-xs text-slate-500">
+                        <strong>Explanation:</strong> This system uses a radius and two angles. $\rho$ is the straight-line distance from the origin. $\theta$ is the same longitude angle as in cylindrical coords. $\phi$ is the angle down from the positive $z$-axis (colatitude). It is perfect for problems involving spheres, such as planetary gravity or hydrogen atom orbitals.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Calculator -->
+            <div class="bg-indigo-50 p-6 rounded-xl border border-indigo-100">
+                <h3 class="text-lg font-bold text-slate-800 mb-4">Coordinate Converter</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">X</label>
+                        <input type="number" id="inp-x" value="1" class="w-full p-2 rounded border border-indigo-200" oninput="convertCoords()">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Y</label>
+                        <input type="number" id="inp-y" value="1" class="w-full p-2 rounded border border-indigo-200" oninput="convertCoords()">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Z</label>
+                        <input type="number" id="inp-z" value="1" class="w-full p-2 rounded border border-indigo-200" oninput="convertCoords()">
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="bg-white p-3 rounded shadow-sm">
+                        <p class="text-xs text-slate-400 font-bold mb-1">CYLINDRICAL</p>
+                        <p class="text-sm">$r =$ <span id="out-r" class="text-indigo-600 font-bold">1.41</span></p>
+                        <p class="text-sm">$\theta =$ <span id="out-theta-c" class="text-indigo-600 font-bold">45.00&deg;</span></p>
+                        <p class="text-sm">$z =$ <span id="out-z" class="text-indigo-600 font-bold">1.00</span></p>
+                    </div>
+                    <div class="bg-white p-3 rounded shadow-sm">
+                        <p class="text-xs text-slate-400 font-bold mb-1">SPHERICAL</p>
+                        <p class="text-sm">$\rho =$ <span id="out-rho" class="text-indigo-600 font-bold">1.73</span></p>
+                        <p class="text-sm">$\theta =$ <span id="out-theta-s" class="text-indigo-600 font-bold">45.00&deg;</span></p>
+                        <p class="text-sm">$\phi =$ <span id="out-phi" class="text-indigo-600 font-bold">54.74&deg;</span></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION: PHYSICS OF CURVES (Chapter 14.6 & 14.7) -->
+        <section id="space-curves" class="content-section p-6 md:p-10 max-w-5xl mx-auto hidden">
+            <h2 class="text-3xl font-bold text-slate-800 mb-6">Physics of Space Curves</h2>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <h3 class="text-lg font-bold text-slate-800 mb-4">Vector Functions & Derivatives</h3>
+                    <div class="space-y-4">
+                        <div class="p-3 bg-slate-50 border-l-4 border-indigo-500 rounded-r">
+                            <p class="font-bold text-sm text-slate-700">Position Vector</p>
+                            <p class="text-sm text-slate-600 mt-1">$$ \mathbf{r} = \boldsymbol{\sigma}(t) = f(t)\mathbf{i} + g(t)\mathbf{j} + h(t)\mathbf{k} $$</p>
+                            <p class="text-xs text-slate-500 mt-2">Describes the path of a particle in 3D space as a function of time $t$.</p>
+                        </div>
+                        <div class="p-3 bg-slate-50 border-l-4 border-emerald-500 rounded-r">
+                            <p class="font-bold text-sm text-slate-700">Velocity (Derivative)</p>
+                            <p class="text-sm text-slate-600 mt-1">$$ \mathbf{v} = \boldsymbol{\sigma}'(t) $$</p>
+                            <p class="text-xs text-slate-500 mt-2">The rate of change of position. The vector is always <strong>tangent</strong> to the curve. Its magnitude, $||\mathbf{v}||$, is the scalar speed.</p>
+                        </div>
+                        <div class="p-3 bg-slate-50 border-l-4 border-rose-500 rounded-r">
+                            <p class="font-bold text-sm text-slate-700">Acceleration (2nd Derivative)</p>
+                            <p class="text-sm text-slate-600 mt-1">$$ \mathbf{a} = \boldsymbol{\sigma}''(t) $$</p>
+                            <p class="text-xs text-slate-500 mt-2">The rate of change of velocity. It has components parallel to the curve (changing speed) and perpendicular to the curve (changing direction).</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6">
+                        <h4 class="font-bold text-slate-700 mb-2">Arc Length Formula</h4>
+                        <div class="p-4 bg-slate-900 rounded-lg text-slate-50 text-sm overflow-x-auto text-center">
+                            $$ L = \int_{a}^{b} \sqrt{ (f'(t))^2 + (g'(t))^2 + (h'(t))^2 } \, dt $$
+                        </div>
+                        <p class="text-sm text-slate-600 mt-2">
+                            <strong>Explanation:</strong> This integral sums up the infinitesimal distances traveled. Notice that the term under the square root is exactly the speed $||\mathbf{v}||$. So, Arc Length is simply the integral of speed over time: $L = \int speed \cdot dt$.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="bg-indigo-600 p-6 rounded-xl text-white shadow-md">
+                        <h3 class="text-lg font-bold mb-2">Kepler's 3rd Law</h3>
+                        <p class="text-indigo-100 text-sm mb-4">Relating the period ($T$) and radius ($r_0$) of a circular orbit.</p>
+                        <div class="text-xl text-center bg-indigo-700 p-2 rounded">
+                            $$ T^2 = \frac{4\pi^2}{GM} r_{0}^3 $$
+                        </div>
+                        <p class="text-xs text-indigo-200 mt-3">
+                            This law (derived from Newton's laws of motion and gravitation) states that the square of the orbital period is proportional to the cube of the orbit's radius. It implies planets further from the sun move slower and take much longer to complete an orbit.
+                        </p>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                        <h3 class="text-lg font-bold text-slate-800 mb-2">Curvature ($k$)</h3>
+                        <p class="text-sm text-slate-600 mb-3">A measure of how fast the curve turns.</p>
+                        <div class="bg-slate-100 p-2 rounded text-center">
+                            $$ k = \frac{||\mathbf{v} \times \mathbf{a}||}{||\mathbf{v}||^3} $$
+                        </div>
+                        <p class="text-xs text-slate-500 mt-3">
+                            Curvature quantifies deviation from a straight line. A line has $k=0$. A circle of radius $R$ has constant curvature $k=1/R$ (smaller circles curve "sharper"). It depends on both velocity and acceleration vectors.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION: PARTIAL DIFF (Chapter 15) -->
+        <section id="partials" class="content-section p-6 md:p-10 max-w-5xl mx-auto hidden">
+            <h2 class="text-3xl font-bold text-slate-800 mb-6">Partial Differentiation</h2>
+            
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 mb-8">
+                <div class="p-6 border-b border-slate-100">
+                    <h3 class="text-xl font-bold text-indigo-700">Definitions</h3>
+                </div>
+                <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <p class="text-sm font-bold text-slate-500 uppercase mb-2">Partial w.r.t x</p>
+                        <div class="bg-slate-50 p-4 rounded border border-slate-200 text-sm overflow-x-auto">
+                            $$ f_{x}(x,y) = \lim_{\Delta x\to 0} \frac{f(x+\Delta x, y) - f(x,y)}{\Delta x} $$
+                        </div>
+                        <p class="text-xs text-slate-500 mt-2">
+                            Measures the instantaneous rate of change of the function $f$ as you move strictly in the $x$-direction, treating $y$ as a constant. Geometrically, it is the slope of the surface in the $x$-direction.
+                        </p>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-slate-500 uppercase mb-2">Partial w.r.t y</p>
+                        <div class="bg-slate-50 p-4 rounded border border-slate-200 text-sm overflow-x-auto">
+                            $$ f_{y}(x,y) = \lim_{\Delta y\to 0} \frac{f(x, y+\Delta y) - f(x,y)}{\Delta y} $$
+                        </div>
+                        <p class="text-xs text-slate-500 mt-2">
+                            Measures the rate of change as you move strictly in the $y$-direction, treating $x$ as a constant.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <h3 class="font-bold text-slate-800 mb-2">Clairaut's Theorem</h3>
+                    <p class="text-sm text-slate-600 mb-3">Equality of Mixed Partials</p>
+                    <div class="p-3 bg-emerald-50 text-emerald-800 border border-emerald-100 rounded text-sm text-center">
+                        If second partials are continuous:<br>
+                        $$ f_{xy} = f_{yx} $$
+                    </div>
+                    <p class="text-xs text-slate-500 mt-3">
+                        This theorem assures us that for most "nice" functions used in physics and engineering, the order of differentiation does not matter. Differentiating by $x$ then $y$ yields the same result as $y$ then $x$. It implies the geometric "twist" of the surface is consistent.
+                    </p>
+                </div>
+                
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <h3 class="font-bold text-slate-800 mb-2">Wave Equation (1D)</h3>
+                    <p class="text-sm text-slate-600 mb-3">Describing wave motion.</p>
+                    <div class="p-3 bg-blue-50 text-blue-800 border border-blue-100 rounded text-sm text-center">
+                        $$ \frac{\partial^2\phi}{\partial t^2} = c^2 \frac{\partial^2\phi}{\partial x^2} $$
+                    </div>
+                    <p class="text-xs text-slate-500 mt-3">
+                        This famous partial differential equation relates the acceleration of a wave particle (time derivative, left side) to the curvature of the wave shape (spatial derivative, right side). $\phi$ is the displacement, $t$ is time, $x$ is position, and $c$ is the wave propagation speed.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // --- NAVIGATION LOGIC ---
+        const menuBtn = document.getElementById('menu-btn');
+        const sidebar = document.getElementById('sidebar');
+        let isMenuOpen = false;
+
+        menuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            isMenuOpen = !isMenuOpen;
+            if(isMenuOpen) {
+                sidebar.classList.remove('-translate-x-full');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+            }
+        });
+
+        function closeMobileMenu() {
+            if(window.innerWidth < 768 && isMenuOpen) {
+                sidebar.classList.add('-translate-x-full');
+                isMenuOpen = false;
+            }
+        }
+
+        function showSection(id) {
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(el => {
+                el.classList.add('hidden');
+                el.classList.remove('block');
+            });
+            // Show target
+            const target = document.getElementById(id);
+            if(target) {
+                target.classList.remove('hidden');
+                target.classList.add('block');
+                // Trigger resize for charts if they were hidden
+                if(id === 'conics') updateConic();
+                if(id === 'surfaces') updateSurface();
+                if(id === 'coords') drawDiagrams();
+            }
+            // Update active state in nav
+            document.querySelectorAll('.nav-item').forEach(btn => {
+                btn.classList.remove('bg-indigo-50', 'text-indigo-700');
+            });
+            const activeBtn = document.querySelector(`button[data-target="${id}"]`);
+            if(activeBtn) activeBtn.classList.add('bg-indigo-50', 'text-indigo-700');
+            
+            closeMobileMenu();
+        }
+
+        // --- CONIC SECTIONS LOGIC (Chart.js) ---
+        let conicChartInstance = null;
+
+        function updateConic() {
+            const type = document.getElementById('conicType').value;
+            const a = parseFloat(document.getElementById('input-a').value);
+            const b = parseFloat(document.getElementById('input-b').value);
+            
+            // Update Text
+            document.getElementById('val-a').innerText = a;
+            document.getElementById('val-b').innerText = b;
+            
+            let equationHTML = "";
+            let eccentricity = 0;
+            
+            const dataPoints1 = []; // Top/Right branch
+            const dataPoints2 = []; // Bottom/Left branch
+            
+            // Generate Data
+            const steps = 100;
+            
+            if (type === 'ellipse') {
+                equationHTML = `$$ \\frac{x^2}{${a*a}} + \\frac{y^2}{${b*b}} = 1 $$`;
+                // c = sqrt(|a^2 - b^2|)
+                const c = Math.sqrt(Math.abs(a*a - b*b));
+                eccentricity = c / Math.max(a, b);
+                
+                for(let i=0; i<=steps; i++) {
+                    const theta = (i/steps) * 2 * Math.PI;
+                    dataPoints1.push({x: a * Math.cos(theta), y: b * Math.sin(theta)});
+                }
+            } 
+            else if (type.includes('hyperbola')) {
+                // c = sqrt(a^2 + b^2)
+                const c = Math.sqrt(a*a + b*b);
+                // e = c/a (where a is the major axis term)
+                eccentricity = c / (type === 'hyperbola_x' ? a : b);
+
+                // Range for t: -2 to 2 to show curves
+                for(let t=-2; t<=2; t+=0.05) {
+                    if (type === 'hyperbola_x') {
+                        equationHTML = `$$ \\frac{x^2}{${a*a}} - \\frac{y^2}{${b*b}} = 1 $$`;
+                        // x = a sec t, y = b tan t is standard, but simple x=a cosh t, y=b sinh t gives one branch
+                        // Right branch
+                        dataPoints1.push({x: a * Math.cosh(t), y: b * Math.sinh(t)});
+                        // Left branch
+                        dataPoints2.push({x: -a * Math.cosh(t), y: b * Math.sinh(t)});
+                    } else {
+                        equationHTML = `$$ \\frac{y^2}{${b*b}} - \\frac{x^2}{${a*a}} = 1 $$`;
+                        // Top branch
+                        dataPoints1.push({x: a * Math.sinh(t), y: b * Math.cosh(t)});
+                        // Bottom branch
+                        dataPoints2.push({x: a * Math.sinh(t), y: -b * Math.cosh(t)});
+                    }
+                }
+            }
+
+            const eqElement = document.getElementById('conic-equation');
+            eqElement.innerHTML = equationHTML;
+            document.getElementById('calc-eccentricity').innerText = eccentricity.toFixed(3);
+            
+            // Ask MathJax to typeset the new equation
+            if(window.MathJax) {
+                MathJax.typesetPromise([eqElement]);
+            }
+
+            // Render Chart
+            const ctx = document.getElementById('conicChart').getContext('2d');
+            
+            if(conicChartInstance) {
+                conicChartInstance.destroy();
+            }
+
+            const datasets = [{
+                label: 'Curve',
+                data: dataPoints1,
+                borderColor: 'rgb(79, 70, 229)', // Indigo 600
+                backgroundColor: 'rgba(79, 70, 229, 0.2)',
+                showLine: true,
+                pointRadius: 0
+            }];
+
+            if(dataPoints2.length > 0) {
+                datasets.push({
+                    label: 'Branch 2',
+                    data: dataPoints2,
+                    borderColor: 'rgb(79, 70, 229)',
+                    showLine: true,
+                    pointRadius: 0
+                });
+            }
+
+            conicChartInstance = new Chart(ctx, {
+                type: 'scatter',
+                data: { datasets: datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            min: -15, max: 15,
+                            grid: { color: '#e2e8f0' },
+                            title: { display: true, text: 'x' }
+                        },
+                        y: {
+                            min: -15, max: 15,
+                            grid: { color: '#e2e8f0' },
+                            title: { display: true, text: 'y' }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false }
+                    }
+                }
+            });
+        }
+
+        // --- QUADRIC SURFACES LOGIC (Plotly.js) ---
+        function updateSurface() {
+            const type = document.getElementById('surfaceType').value;
+            const container = document.getElementById('surfacePlot');
+            let z = [], x = [], y = [];
+            let equation = "";
+            let color = 'viridis';
+
+            // Constants
+            const a=1, b=1, c=1; 
+            const n = 30; // Resolution
+
+            // Generate parametric data for mesh3d or surface
+            
+            let u = [], v = [];
+            for(let i=0; i<=n; i++) {
+                let u_val = (i/n) * 2 * Math.PI; // 0 to 2pi
+                for(let j=0; j<=n; j++) {
+                    let v_val = (j/n) * Math.PI; // 0 to pi (for sphere) or other ranges
+                    
+                    let px=0, py=0, pz=0;
+
+                    if(type === 'ellipsoid') {
+                        equation = "$$ \\frac{x^2}{a^2} + \\frac{y^2}{b^2} + \\frac{z^2}{c^2} = 1 $$";
+                        px = a * Math.sin(v_val) * Math.cos(u_val);
+                        py = b * Math.sin(v_val) * Math.sin(u_val);
+                        pz = c * Math.cos(v_val);
+                    }
+                    else if(type === 'hyperboloid1') {
+                        equation = "$$ \\frac{x^2}{a^2} + \\frac{y^2}{b^2} - \\frac{z^2}{c^2} = 1 $$";
+                        let v_mod = (j/n) * 4 - 2; 
+                        px = a * Math.cosh(v_mod) * Math.cos(u_val);
+                        py = b * Math.cosh(v_mod) * Math.sin(u_val);
+                        pz = c * Math.sinh(v_mod);
+                    }
+                    else if(type === 'hyperboloid2') {
+                        equation = "$$ \\frac{x^2}{a^2} + \\frac{y^2}{b^2} - \\frac{z^2}{c^2} = -1 $$";
+                        let v_mod = (j/n) * 2; 
+                        px = a * Math.sinh(v_mod) * Math.cos(u_val);
+                        py = b * Math.sinh(v_mod) * Math.sin(u_val);
+                        pz = c * Math.cosh(v_mod);
+                    }
+                    else if(type === 'cone') {
+                        equation = "$$ \\frac{x^2}{a^2} + \\frac{y^2}{b^2} - \\frac{z^2}{c^2} = 0 $$";
+                        let v_mod = (j/n) * 4 - 2; // Height
+                        px = (a * v_mod/2) * Math.cos(u_val);
+                        py = (b * v_mod/2) * Math.sin(u_val);
+                        pz = (c * v_mod/2);
+                    }
+                    else if(type === 'paraboloid') {
+                        equation = "$$ z = \\frac{x^2}{a^2} + \\frac{y^2}{b^2} $$";
+                        let v_mod = (j/n) * 2; // Radius
+                        px = a * v_mod * Math.cos(u_val);
+                        py = b * v_mod * Math.sin(u_val);
+                        pz = Math.pow(v_mod, 2);
+                    }
+                    else if(type === 'saddle') {
+                        equation = "$$ z = \\frac{x^2}{a^2} - \\frac{y^2}{b^2} $$";
+                        let x_val = (i/n)*4 - 2;
+                        let y_val = (j/n)*4 - 2;
+                        px = x_val;
+                        py = y_val;
+                        pz = (x_val*x_val)/(a*a) - (y_val*y_val)/(b*b);
+                    }
+
+                    x.push(px);
+                    y.push(py);
+                    z.push(pz);
+                }
+            }
+
+            const eqElement = document.getElementById('surface-eq');
+            eqElement.innerHTML = equation;
+            if(window.MathJax) {
+                MathJax.typesetPromise([eqElement]);
+            }
+
+            // Plotly Config
+            let data = [{
+                type: 'mesh3d',
+                x: x,
+                y: y,
+                z: z,
+                opacity: 0.8,
+                color: 'rgb(79, 70, 229)',
+                colorscale: [
+                    [0, 'rgb(79, 70, 229)'],
+                    [1, 'rgb(167, 139, 250)']
+                ],
+                intensity: z,
+                showscale: false
+            }];
+
+            // Layout
+            let layout = {
+                margin: { t: 0, b: 0, l: 0, r: 0 },
+                scene: {
+                    aspectmode: 'cube',
+                    xaxis: { title: 'x' },
+                    yaxis: { title: 'y' },
+                    zaxis: { title: 'z' }
+                },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)'
+            };
+
+            Plotly.newPlot(container, data, layout, {displayModeBar: false, responsive: true});
+        }
+
+        // --- COORDINATE CONVERTER LOGIC ---
+        function convertCoords() {
+            const x = parseFloat(document.getElementById('inp-x').value) || 0;
+            const y = parseFloat(document.getElementById('inp-y').value) || 0;
+            const z = parseFloat(document.getElementById('inp-z').value) || 0;
+
+            // Cylindrical
+            const r = Math.sqrt(x*x + y*y);
+            const theta_rad = Math.atan2(y, x);
+            const theta_deg = (theta_rad * 180 / Math.PI).toFixed(2);
+
+            // Spherical
+            const rho = Math.sqrt(x*x + y*y + z*z);
+            // phi is angle from z-axis. cos(phi) = z / rho
+            const phi_rad = (rho === 0) ? 0 : Math.acos(z / rho);
+            const phi_deg = (phi_rad * 180 / Math.PI).toFixed(2);
+
+            // Update DOM
+            document.getElementById('out-r').innerText = r.toFixed(2);
+            document.getElementById('out-theta-c').innerText = theta_deg + '°';
+            document.getElementById('out-z').innerText = z.toFixed(2);
+
+            document.getElementById('out-rho').innerText = rho.toFixed(2);
+            document.getElementById('out-theta-s').innerText = theta_deg + '°';
+            document.getElementById('out-phi').innerText = phi_deg + '°';
+        }
+
+        // Draw simple static diagrams for coords on canvas
+        function drawDiagrams() {
+            // Cylindrical
+            const c1 = document.getElementById('cylCanvas');
+            if(c1) {
+                const ctx1 = c1.getContext('2d');
+                ctx1.clearRect(0,0,200,120);
+                // Axes
+                ctx1.beginPath(); ctx1.moveTo(20, 100); ctx1.lineTo(100, 100); ctx1.stroke(); // y
+                ctx1.beginPath(); ctx1.moveTo(20, 100); ctx1.lineTo(20, 20); ctx1.stroke(); // z
+                ctx1.beginPath(); ctx1.moveTo(20, 100); ctx1.lineTo(60, 115); ctx1.stroke(); // x
+                
+                // Point P
+                ctx1.fillStyle = '#4f46e5';
+                ctx1.beginPath(); ctx1.arc(80, 40, 3, 0, 2*Math.PI); ctx1.fill();
+                // Dotted lines
+                ctx1.setLineDash([2, 2]);
+                ctx1.strokeStyle = '#94a3b8';
+                ctx1.beginPath(); ctx1.moveTo(20, 100); ctx1.lineTo(80, 80); ctx1.stroke(); // r
+                ctx1.beginPath(); ctx1.moveTo(80, 80); ctx1.lineTo(80, 40); ctx1.stroke(); // z height
+                ctx1.setLineDash([]);
+                
+                ctx1.fillStyle = '#64748b';
+                ctx1.font = '10px sans-serif';
+                ctx1.fillText('r', 50, 95);
+                ctx1.fillText('z', 85, 60);
+            }
+
+            // Spherical
+            const c2 = document.getElementById('sphCanvas');
+            if(c2) {
+                const ctx2 = c2.getContext('2d');
+                ctx2.clearRect(0,0,200,120);
+                // Axes
+                ctx2.strokeStyle = '#000';
+                ctx2.beginPath(); ctx2.moveTo(20, 100); ctx2.lineTo(100, 100); ctx2.stroke(); 
+                ctx2.beginPath(); ctx2.moveTo(20, 100); ctx2.lineTo(20, 20); ctx2.stroke();
+                ctx2.beginPath(); ctx2.moveTo(20, 100); ctx2.lineTo(60, 115); ctx2.stroke(); 
+
+                // Point P
+                ctx2.fillStyle = '#4f46e5';
+                ctx2.beginPath(); ctx2.arc(80, 40, 3, 0, 2*Math.PI); ctx2.fill();
+                
+                // Rho
+                ctx2.strokeStyle = '#4f46e5';
+                ctx2.beginPath(); ctx2.moveTo(20, 100); ctx2.lineTo(80, 40); ctx2.stroke();
+                
+                // Angle Phi
+                ctx2.strokeStyle = '#94a3b8';
+                ctx2.beginPath(); ctx2.arc(20, 100, 15, 1.5*Math.PI, 1.75*Math.PI); ctx2.stroke();
+
+                ctx2.fillStyle = '#64748b';
+                ctx2.font = '10px sans-serif';
+                ctx2.fillText('ρ', 45, 65);
+                ctx2.fillText('φ', 25, 85);
+            }
+        }
+
+        // Initialize
+        window.addEventListener('load', () => {
+            // Default load
+            showSection('home');
+            // Init default visualizers once invisible
+            updateConic();
+            drawDiagrams();
+        });
+
+    </script>
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+</body>
+</html>
